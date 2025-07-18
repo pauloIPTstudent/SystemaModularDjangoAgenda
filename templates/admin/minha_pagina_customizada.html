@@ -12,6 +12,7 @@
         width: 1000px;
         margin: 40px auto;
     }
+    
   </style>
 {% endblock %}
 
@@ -24,8 +25,24 @@
 
     <!-- Calendário -->
     <div id="calendar"></div>
+    
 
 <script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+            }
+        }
+        return cookieValue;
+    }
+
       document.addEventListener('DOMContentLoaded', function() {
         var calendarEl = document.getElementById('calendar');
 
@@ -35,35 +52,48 @@
           headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay' // botões para mês, semana e dia
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' // botões para mês, semana e dia
           },
 
           editable: true,  // ativa drag-n-drop e resize de eventos
           selectable: true,
 
-          events: '/api/agenda/compromissos/', // API que retorna eventos JSON
+          events: '/api/compromissos/', // API que retorna eventos JSON
           
           eventTimeFormat: {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
           },
+        dateClick: function(info) {
+            const titulo = prompt("Título do compromisso:");
+            if (titulo) {
+                fetch("/api/compromissos/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                body: JSON.stringify({
+                    titulo: titulo,
+                    data_inicio: info.dateStr,
+                    data_fim: info.dateStr,  // você pode ajustar para um horário padrão ou permitir o usuário escolher
+                    tipo_id: 1  // <- substitua por um tipo_id válido existente no seu banco de dados
+                }),
+                })
+                .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Erro ao criar compromisso");
+                }
+                return res.json();
+                })
+                .then((evento) => {
+                calendar.refetchEvents();  // atualiza o calendário com o novo evento
+                })
+                .catch((error) => alert(error.message));
+            }
+        },
 
-          eventClick: function(info) {
-            alert('Evento: ' + info.event.title + '\nInício: ' + info.event.start);
-          },
-
-          // Evento chamado ao mover (drag-n-drop)
-          eventDrop: function(info) {
-            alert('Evento movido para: ' + info.event.start.toISOString());
-            // Aqui você pode fazer uma chamada AJAX para atualizar o evento no backend
-          },
-
-          // Evento chamado ao redimensionar evento
-          eventResize: function(info) {
-            alert('Evento redimensionado. Novo fim: ' + info.event.end.toISOString());
-            // Atualizar backend se desejar
-          }
         });
 
         calendar.render();

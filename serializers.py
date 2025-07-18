@@ -21,6 +21,21 @@ class AgendaParticipanteSerializer(serializers.ModelSerializer):
         fields = ['id', 'compromisso', 'usuario', 'usuario_id', 'presenca_confirmada']
 
 
+#class AgendaCompromissoSerializer(serializers.ModelSerializer):
+#    tipo = AgendaTipoSerializer(read_only=True)
+#    tipo_id = serializers.PrimaryKeyRelatedField(
+#        queryset=AgendaTipo.objects.all(), source='tipo', write_only=True
+#    )
+#    participantes = AgendaParticipanteSerializer(many=True, read_only=True)
+
+#    class Meta:
+#        model = AgendaCompromisso
+#        fields = [
+#            'id', 'agenda', 'titulo', 'descricao', 'data_inicio', 'data_fim', 'tipo', 'tipo_id',
+#            'status', 'local', 'cliente', 'observacoes', 'data_criacao', 'participantes'
+#        ]
+#        read_only_fields = ['data_criacao']
+        
 class AgendaCompromissoSerializer(serializers.ModelSerializer):
     tipo = AgendaTipoSerializer(read_only=True)
     tipo_id = serializers.PrimaryKeyRelatedField(
@@ -28,14 +43,18 @@ class AgendaCompromissoSerializer(serializers.ModelSerializer):
     )
     participantes = AgendaParticipanteSerializer(many=True, read_only=True)
 
+    title = serializers.CharField(source='titulo')
+    start = serializers.DateTimeField(source='data_inicio')
+    end = serializers.DateTimeField(source='data_fim')
+    color = serializers.SerializerMethodField()
+
     class Meta:
         model = AgendaCompromisso
-        fields = [
-            'id', 'agenda', 'titulo', 'descricao', 'data_inicio', 'data_fim', 'tipo', 'tipo_id',
-            'status', 'local', 'cliente', 'observacoes', 'data_criacao', 'participantes'
-        ]
+        fields = ['id', 'title', 'start', 'end', 'color','tipo', 'tipo_id','participantes','status', 'local', 'cliente', 'observacoes', 'data_criacao', ]
         read_only_fields = ['data_criacao']
 
+    def get_color(self, obj):
+        return obj.tipo.cor if obj.tipo and obj.tipo.cor else '#3788d8'
 
 class AgendaSerializer(serializers.ModelSerializer):
     compromissos = AgendaCompromissoSerializer(many=True, read_only=True)

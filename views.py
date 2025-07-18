@@ -12,6 +12,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
 import json
+
 class AgendaViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AgendaSerializer
