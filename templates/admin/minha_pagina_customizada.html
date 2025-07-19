@@ -3,103 +3,151 @@
 {% block title %}Angenda{% endblock %}
 
 {% block extrahead %}
-  {{ block.super }}
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-  <style>
-    #calendar {
-        width: 1000px;
-        margin: 40px auto;
-    }
-    
-  </style>
+{{ block.super }}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<style>
+  .agenda-wrapper {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    /* alinha topo com topo */
+    gap: 20px;
+    /* espaço entre painel e calendário */
+    padding: 20px;
+  }
+
+  #external-events {
+    background-color: white;
+
+    flex: 0 0 200px;
+    padding: 10px 15px;
+
+  }
+
+  .fc-event {
+    margin: 10px 0;
+    padding: 4px;
+    background: #3788d8;
+    color: white;
+    cursor: pointer;
+  }
+
+  #calendar {
+    background-color: white;
+    padding: 0 10px 10px 10px;
+    border-radius: 0px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    border-top: 5px solid #FFD700;
+    /* risca amarela no topo */
+    flex: 1;
+    /* ocupa o restante do espaço */
+  }
+</style>
 {% endblock %}
 
 {% block sidebar %}
-  {{ block.super }}
+{{ block.super }}
 {% endblock %}
 
 {% block content %}
-  <div class="content">
+<div class="agenda-wrapper">
+  <div id="external-events">
+    <p><strong>Arraste para agendar:</strong></p>
+    <div class='fc-event' data-event='{"title":"Consulta", "duration":"01:00"}'>Consulta</div>
+    <div class='fc-event' data-event='{"title":"Reunião", "duration":"02:00"}'>Reunião</div>
+  </div>
+  <div id="calendar"></div>
+</div>
 
-    <!-- Calendário -->
-    <div id="calendar"></div>
-    
+<!-- Calendário -->
+
 
 <script>
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-            }
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
-        return cookieValue;
+      }
     }
+    return cookieValue;
+  }
 
-      document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = document.getElementById('calendar');
+  document.addEventListener('DOMContentLoaded', function () {
+    new FullCalendar.Draggable(document.getElementById('external-events'), {
+      itemSelector: '.fc-event',
+      eventData: function (eventEl) {
+        return JSON.parse(eventEl.dataset.event);
+      }
+    });
+    var calendarEl = document.getElementById('calendar');
 
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: 'dayGridMonth', // visão inicial: mês
-
-          headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' // botões para mês, semana e dia
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      droppable: true,
+      editable: true,
+      selectable: true,
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+      },
+      events: '/api/compromissos/',
+      eventTimeFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      },
+      eventReceive: function (info) {
+        console.log('Novo evento criado:', info.event);
+        // Aqui você pode salvar o novo evento no backend com fetch/AJAX
+        const dados = {
+          title: info.event.title,
+          start: info.event.start.toISOString(),
+          end: info.event.end ? info.event.end.toISOString() : null,
+          duration: info.event.extendedProps.duration || '01:00',
+          tipo_id: 1,           // se quiser associar tipo
+          status: 'agendado',      // valor padrão ou UI
+          local: '',
+          cliente: null,
+          observacoes: ''
+        };
+        fetch('/api/compromissos/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
           },
+          body: JSON.stringify(dados)
+        })
+          .then(r => r.json())
+          .then(data => {
+            // Atualiza o ID do evento criado
+            info.event.setProp('id', data.id);
+            // Recarrega todos os eventos do source (incluindo este recém‑criado)
+            calendar.refetchEvents();
+          })
+          .catch(() => { info.revert(); alert('Falha ao salvar'); });
+      },
+      dayMaxEventRows: 1, // OU dayMaxEvents: 3
+      views: {
+        dayGridMonth: {
+          dayMaxEventRows: 1 // só aplica ao modo mês
+        }
+      },
+    });
 
-          editable: true,  // ativa drag-n-drop e resize de eventos
-          selectable: true,
+    calendar.render();
 
-          events: '/api/compromissos/', // API que retorna eventos JSON
-          
-          eventTimeFormat: {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          },
-        dateClick: function(info) {
-            const titulo = prompt("Título do compromisso:");
-            if (titulo) {
-                fetch("/api/compromissos/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"),
-                },
-                body: JSON.stringify({
-                    titulo: titulo,
-                    data_inicio: info.dateStr,
-                    data_fim: info.dateStr,  // você pode ajustar para um horário padrão ou permitir o usuário escolher
-                    tipo_id: 1  // <- substitua por um tipo_id válido existente no seu banco de dados
-                }),
-                })
-                .then((res) => {
-                if (!res.ok) {
-                    throw new Error("Erro ao criar compromisso");
-                }
-                return res.json();
-                })
-                .then((evento) => {
-                calendar.refetchEvents();  // atualiza o calendário com o novo evento
-                })
-                .catch((error) => alert(error.message));
-            }
-        },
-
-        });
-
-        calendar.render();
-      });
+  });
 </script>
-    
-  </div>
-  
+
+</div>
+
 {% endblock %}
