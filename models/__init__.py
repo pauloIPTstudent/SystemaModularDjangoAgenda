@@ -22,6 +22,7 @@ class AgendaTipo(models.Model):
 
 
 class AgendaCompromisso(models.Model):
+        
     STATUS_CHOICES = [
         ('agendado', 'Agendado'),
         ('concluido', 'Concluído'),
@@ -42,7 +43,10 @@ class AgendaCompromisso(models.Model):
 
     def __str__(self):
         return f'{self.titulo} ({self.data_inicio.date()})'
-
+    
+    class Meta:
+        verbose_name = "Compromisso"
+        verbose_name_plural = "Compromissos"
 
 class AgendaParticipante(models.Model):
     compromisso = models.ForeignKey(AgendaCompromisso, on_delete=models.CASCADE, related_name='participantes')

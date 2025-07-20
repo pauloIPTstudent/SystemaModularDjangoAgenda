@@ -17,22 +17,6 @@
     padding: 20px;
   }
 
-  #external-events {
-    background-color: white;
-
-    flex: 0 0 200px;
-    padding: 10px 15px;
-
-  }
-
-  .fc-event {
-    margin: 10px 0;
-    padding: 4px;
-    background: #3788d8;
-    color: white;
-    cursor: pointer;
-  }
-
   #calendar {
     background-color: white;
     padding: 0 10px 10px 10px;
@@ -43,6 +27,70 @@
     flex: 1;
     /* ocupa o restante do espaço */
   }
+
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    padding-top: 80px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+
+  .modal-content {
+    background-color: #fff;
+    margin: auto;
+    padding: 20px;
+    width: 400px;
+    border-radius: 6px;
+  }
+
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .close:hover {
+    color: black;
+  }
+
+  .form-field {
+    margin-bottom: 10px;
+  }
+
+  label {
+    display: block;
+    font-weight: bold;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 6px;
+    margin-top: 4px;
+  }
+
+  button {
+    margin-top: 10px;
+    padding: 8px 14px;
+    background-color: #3788d8;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #2d6ebc;
+  }
 </style>
 {% endblock %}
 
@@ -52,18 +100,123 @@
 
 {% block content %}
 <div class="agenda-wrapper">
-  <div id="external-events">
-    <p><strong>Arraste para agendar:</strong></p>
-    <div class='fc-event' data-event='{"title":"Consulta", "duration":"01:00"}'>Consulta</div>
-    <div class='fc-event' data-event='{"title":"Reunião", "duration":"02:00"}'>Reunião</div>
-  </div>
+
   <div id="calendar"></div>
 </div>
 
+<!-- Modal -->
+<div id="eventModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="fecharModal()">&times;</span>
+    <h3>Novo Compromisso</h3>
+    <form id="eventForm">
+      <div class="form-field">
+        <label for="titulo">Título:</label>
+        <input type="text" id="titulo" name="titulo" required>
+      </div>
+      <div class="form-field">
+        <label for="dataInicio">Início:</label>
+        <input type="datetime-local" id="dataInicio" name="dataInicio" required>
+      </div>
+      <div class="form-field">
+        <label for="dataFim">Fim:</label>
+        <input type="datetime-local" id="dataFim" name="dataFim">
+      </div>
+      <div class="form-field">
+        <label for="tipo">Tipo:</label>
+        <select id="tipo" name="tipo">
+        </select>
+        <button type="button" onclick="abrirModalTipo()">+ Novo tipo</button>
+      </div>
+      <div class="form-field">
+        <label for="local">Local:</label>
+        <input type="text" id="local" name="local">
+      </div>
+      <div class="form-field">
+        <label for="obs">Observações:</label>
+        <textarea id="obs" name="obs"></textarea>
+      </div>
+      <button type="submit" id="btnSalvar">Salvar</button>
+      <button type="button" id="btnExcluir" style="display:none; background-color:#e74c3c;">Excluir</button>
+    </form>
+  </div>
+</div>
+<!-- Modal para adicionar novo tipo -->
+<div id="modalNovoTipo" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="fecharModalTipo()">&times;</span>
+    <h3>Novo Tipo de Compromisso</h3>
+    <form id="formNovoTipo">
+      <div class="form-field">
+        <label for="novoTipoNome">Nome do tipo:</label>
+        <input type="text" id="novoTipoNome" required />
+      </div>
+      <div class="form-field">
+        <label for="novoTipoCor">Cor:</label>
+        <input type="color" id="novoTipoCor" value="#3788d8" required />
+      </div>
+      <button type="submit">Salvar</button>
+    </form>
+
+  </div>
+</div>
 <!-- Calendário -->
 
 
 <script>
+  let selectedDate = null;
+  function carregarTipos(callback = null) {
+    fetch('/api/tipos/')
+      .then(response => response.json())
+      .then(data => {
+        const select = document.getElementById('tipo');
+        select.innerHTML = '';
+        data.forEach(tipo => {
+          const option = document.createElement('option');
+          option.value = tipo.id;
+          option.textContent = tipo.nome;
+          select.appendChild(option);
+        });
+        if (callback) callback();  // ⬅️ Chama após carregar
+      });
+  }
+
+  function abrirModalTipo() {
+    document.getElementById('modalNovoTipo').style.display = 'block';
+    document.getElementById('novoTipoNome').value = '';
+  }
+
+  function fecharModalTipo() {
+    document.getElementById('modalNovoTipo').style.display = 'none';
+  }
+
+  document.getElementById('formNovoTipo').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const nome = document.getElementById('novoTipoNome').value;
+    const cor = document.getElementById('novoTipoCor').value;
+
+    fetch('/api/tipos/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({ nome, cor })
+    })
+      .then(response => {
+        if (!response.ok) throw new Error();
+        return response.json();
+      })
+      .then(novoTipo => {
+        fecharModalTipo();
+        carregarTipos();
+        setTimeout(() => {
+          document.getElementById('tipo').value = novoTipo.id;
+        }, 200);
+      })
+      .catch(() => alert('Erro ao salvar tipo.'));
+  });
+
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -78,14 +231,28 @@
     }
     return cookieValue;
   }
+  function abrirModal(data) {
+    selectedDate = data;
+    document.getElementById("dataInicio").value = data + "T09:00";
+    document.getElementById("dataFim").value = data + "T10:00";
+    document.getElementById("eventModal").style.display = "block";
+  }
+
+  function fecharModal() {
+    document.getElementById("eventModal").style.display = "none";
+    document.getElementById("eventForm").reset();
+    document.getElementById("eventForm").dataset.eventoId = "";
+    document.getElementById("btnExcluir").style.display = "none";
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
-    new FullCalendar.Draggable(document.getElementById('external-events'), {
-      itemSelector: '.fc-event',
-      eventData: function (eventEl) {
-        return JSON.parse(eventEl.dataset.event);
-      }
-    });
+    //new FullCalendar.Draggable(document.getElementById('external-events'), {
+    //  itemSelector: '.fc-event',
+    //  eventData: function (eventEl) {
+    //    return JSON.parse(eventEl.dataset.event);
+    //  }
+    //});
+
     var calendarEl = document.getElementById('calendar');
 
     var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -104,36 +271,74 @@
         minute: '2-digit',
         hour12: false
       },
-      eventReceive: function (info) {
-        console.log('Novo evento criado:', info.event);
-        // Aqui você pode salvar o novo evento no backend com fetch/AJAX
-        const dados = {
-          title: info.event.title,
-          start: info.event.start.toISOString(),
-          end: info.event.end ? info.event.end.toISOString() : null,
-          duration: info.event.extendedProps.duration || '01:00',
-          tipo_id: 1,           // se quiser associar tipo
-          status: 'agendado',      // valor padrão ou UI
-          local: '',
-          cliente: null,
-          observacoes: ''
+      dateClick: function (info) {
+        abrirModal(info.dateStr);
+      },
+      eventDrop: function (info) {
+        const evento = info.event;
+
+        const dadosAtualizados = {
+          start: evento.start.toISOString(),
+          end: evento.end ? evento.end.toISOString() : null,
         };
-        fetch('/api/compromissos/', {
-          method: 'POST',
+
+        fetch(`/api/compromissos/${evento.id}/`, {
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken'),
           },
-          body: JSON.stringify(dados)
+          body: JSON.stringify(dadosAtualizados)
         })
-          .then(r => r.json())
-          .then(data => {
-            // Atualiza o ID do evento criado
-            info.event.setProp('id', data.id);
-            // Recarrega todos os eventos do source (incluindo este recém‑criado)
-            calendar.refetchEvents();
+          .then(response => {
+            if (!response.ok) throw new Error();
           })
-          .catch(() => { info.revert(); alert('Falha ao salvar'); });
+          .catch(() => {
+            info.revert(); // volta para posição anterior
+            alert('Erro ao mover compromisso.');
+          });
+      },
+      eventClick: function (info) {
+        const evento = info.event;
+        console.log(evento.extendedProps);
+        // Preenche os campos do formulário
+        document.getElementById("titulo").value = evento.title;
+        document.getElementById("dataInicio").value = evento.start.toISOString().slice(0, 16);
+        document.getElementById("dataFim").value = evento.end ? evento.end.toISOString().slice(0, 16) : "";
+        document.getElementById("local").value = evento.extendedProps.local || "";
+        document.getElementById("obs").value = evento.extendedProps.observacoes || "";
+        document.getElementById("tipo").value = evento.extendedProps.tipo.id || "123";
+        
+        // Armazena o ID do evento em edição (usado no submit ou delete)
+        document.getElementById("eventForm").dataset.eventoId = evento.id;
+        document.getElementById("btnExcluir").style.display = "inline-block";
+
+        document.getElementById("eventModal").style.display = "block";
+
+      },
+      eventResize: function (info) {
+        const evento = info.event;
+
+        const dadosAtualizados = {
+          start: evento.start.toISOString(),
+          end: evento.end ? evento.end.toISOString() : null,
+        };
+
+        fetch(`/api/compromissos/${evento.id}/`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+          },
+          body: JSON.stringify(dadosAtualizados)
+        })
+          .then(response => {
+            if (!response.ok) throw new Error();
+          })
+          .catch(() => {
+            info.revert(); // volta ao tamanho original
+            alert('Erro ao redimensionar compromisso.');
+          });
       },
       dayMaxEventRows: 1, // OU dayMaxEvents: 3
       views: {
@@ -142,10 +347,71 @@
         }
       },
     });
-
+    carregarTipos();
     calendar.render();
+    document.getElementById("eventForm").addEventListener("submit", function (e) {
+      e.preventDefault();
 
+      const id = this.dataset.eventoId || null;
+      const method = id ? "PATCH" : "POST";
+      const url = id ? `/api/compromissos/${id}/` : "/api/compromissos/";
+
+      const dados = {
+        title: document.getElementById("titulo").value,
+        start: document.getElementById("dataInicio").value,
+        end: document.getElementById("dataFim").value || null,
+        tipo_id: document.getElementById("tipo").value,
+        status: "agendado",
+        local: document.getElementById("local").value,
+        cliente: null,
+        observacoes: document.getElementById("obs").value
+      };
+
+      fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify(dados)
+      })
+        .then(response => {
+          if (!response.ok) throw new Error();
+          return response.json();
+        })
+        .then(() => {
+          fecharModal();
+          calendar.refetchEvents();
+        })
+        .catch(() => {
+          alert('Erro ao salvar compromisso.');
+        });
+    });
+    document.getElementById("btnExcluir").addEventListener("click", function () {
+      const id = document.getElementById("eventForm").dataset.eventoId;
+      if (!id) return;
+
+      if (!confirm("Deseja realmente excluir este compromisso?")) return;
+
+      fetch(`/api/compromissos/${id}/`, {
+        method: "DELETE",
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        }
+      })
+        .then(response => {
+          if (!response.ok) throw new Error();
+          fecharModal();
+          calendar.refetchEvents();
+        })
+        .catch(() => {
+          alert("Erro ao excluir compromisso.");
+        });
+    });
+    
   });
+
+
 </script>
 
 </div>
