@@ -7,28 +7,25 @@
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <style>
+  /* Wrapper do calendário */
   .agenda-wrapper {
     display: flex;
     width: 100%;
     align-items: flex-start;
-    /* alinha topo com topo */
     gap: 20px;
-    /* espaço entre painel e calendário */
     padding: 20px;
   }
 
   #calendar {
     background-color: white;
     padding: 0 10px 10px 10px;
-    border-radius: 0px;
+    border-radius: 6px;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     border-top: 5px solid #FFD700;
-    /* risca amarela no topo */
     flex: 1;
-    /* ocupa o restante do espaço */
   }
 
-  /* Modal */
+  /* Estilo geral do modal */
   .modal {
     display: none;
     position: fixed;
@@ -39,59 +36,242 @@
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, 0.3);
   }
 
-  .modal-content {
+  .modal-content.large {
     background-color: #fff;
     margin: auto;
-    padding: 20px;
-    width: 400px;
-    border-radius: 6px;
+    padding: 25px 30px;
+    width: 600px;
+    max-width: 95%;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    position: relative;
   }
 
   .close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
     color: #aaa;
-    float: right;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: bold;
     cursor: pointer;
   }
 
   .close:hover {
-    color: black;
+    color: #000;
+  }
+
+  .modal-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .tab-button {
+    padding: 8px 16px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+  }
+
+  .tab-button.active {
+    background: #3788d8;
+    color: white;
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
   }
 
   .form-field {
-    margin-bottom: 10px;
+    margin-bottom: 16px;
   }
 
   label {
     display: block;
-    font-weight: bold;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #444;
   }
 
   input,
   select,
   textarea {
     width: 100%;
-    padding: 6px;
-    margin-top: 4px;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
   }
 
-  button {
-    margin-top: 10px;
-    padding: 8px 14px;
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #3788d8;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 15px;
+  }
+
+  .form-field.half {
+    flex: 1;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  #btnSalvar {
+    flex: 1;
+    padding: 10px;
     background-color: #3788d8;
     color: white;
     border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  #btnSalvar:hover {
+    background-color: #2c6fc1;
+  }
+
+  #btnExcluir {
+    flex: 1;
+    padding: 10px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  #btnExcluir:hover {
+    background-color: #c0392b;
+  }
+
+  button[type="button"] {
+    margin-top: 5px;
+    background-color: transparent;
+    color: #3788d8;
+    border: none;
+    font-size: 13px;
     cursor: pointer;
   }
 
-  button:hover {
-    background-color: #2d6ebc;
+  button[type="button"]:hover {
+    text-decoration: underline;
   }
+
+  #modalNovoTipo .modal-content {
+    width: 350px;
+    max-width: 90%;
+    padding: 25px 30px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    margin: auto;
+    animation: fadeInScale 0.2s ease-in-out;
+  }
+
+  #modalNovoTipo h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+  }
+
+  #modalNovoTipo .form-field label {
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #444;
+  }
+
+  #modalNovoTipo input[type="text"],
+  #modalNovoTipo input[type="color"] {
+    padding: 10px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #modalNovoTipo input:focus {
+    border-color: #3788d8;
+  }
+
+  #modalNovoTipo input[type="color"] {
+    height: 40px;
+    padding: 4px;
+  }
+
+  #modalNovoTipo button[type="submit"] {
+    margin-top: 15px;
+    width: 100%;
+    padding: 10px 14px;
+    background-color: #3788d8;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  #modalNovoTipo button[type="submit"]:hover {
+    background-color: #2c6fc1;
+  }
+
+  #modalNovoTipo .close {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    color: #aaa;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  #modalNovoTipo .close:hover {
+    color: #000;
+  }
+
+.color-picker {
+    background-color: transparent;
+}
+
+
 </style>
+
 {% endblock %}
 
 {% block sidebar %}
@@ -100,47 +280,67 @@
 
 {% block content %}
 <div class="agenda-wrapper">
-
   <div id="calendar"></div>
 </div>
 
 <!-- Modal -->
 <div id="eventModal" class="modal">
-  <div class="modal-content">
+  <div class="modal-content large">
     <span class="close" onclick="fecharModal()">&times;</span>
-    <h3>Novo Compromisso</h3>
+
+    <div class="modal-tabs">
+      <button class="tab-button active" onclick="abrirAba('abaInfo')">Compromisso</button>
+      <button class="tab-button" onclick="abrirAba('abaExtras')">Extras</button>
+    </div>
+
     <form id="eventForm">
-      <div class="form-field">
-        <label for="titulo">Título:</label>
-        <input type="text" id="titulo" name="titulo" required>
+      <!-- Aba Compromisso -->
+      <div id="abaInfo" class="tab-content active">
+        <div class="form-field">
+          <label for="titulo">Título:</label>
+          <input type="text" id="titulo" name="titulo" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field half">
+            <label for="dataInicio">Início:</label>
+            <input type="datetime-local" id="dataInicio" name="dataInicio" required>
+          </div>
+          <div class="form-field half">
+            <label for="dataFim">Fim:</label>
+            <input type="datetime-local" id="dataFim" name="dataFim">
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="tipo">Tipo:</label>
+          <select id="tipo" name="tipo"></select>
+          <button type="button" onclick="abrirModalTipo()">+ Novo tipo</button>
+        </div>
       </div>
-      <div class="form-field">
-        <label for="dataInicio">Início:</label>
-        <input type="datetime-local" id="dataInicio" name="dataInicio" required>
+
+      <!-- Aba Extras -->
+      <div id="abaExtras" class="tab-content">
+        <div class="form-field">
+          <label for="local">Local:</label>
+          <input type="text" id="local" name="local">
+        </div>
+
+        <div class="form-field">
+          <label for="obs">Observações:</label>
+          <textarea id="obs" name="obs"></textarea>
+        </div>
       </div>
-      <div class="form-field">
-        <label for="dataFim">Fim:</label>
-        <input type="datetime-local" id="dataFim" name="dataFim">
+
+      <div class="form-actions">
+        <button type="submit" id="btnSalvar">Salvar</button>
+        <button type="button" id="btnExcluir" style="display:none;">Excluir</button>
       </div>
-      <div class="form-field">
-        <label for="tipo">Tipo:</label>
-        <select id="tipo" name="tipo">
-        </select>
-        <button type="button" onclick="abrirModalTipo()">+ Novo tipo</button>
-      </div>
-      <div class="form-field">
-        <label for="local">Local:</label>
-        <input type="text" id="local" name="local">
-      </div>
-      <div class="form-field">
-        <label for="obs">Observações:</label>
-        <textarea id="obs" name="obs"></textarea>
-      </div>
-      <button type="submit" id="btnSalvar">Salvar</button>
-      <button type="button" id="btnExcluir" style="display:none; background-color:#e74c3c;">Excluir</button>
     </form>
   </div>
 </div>
+
+
 <!-- Modal para adicionar novo tipo -->
 <div id="modalNovoTipo" class="modal">
   <div class="modal-content">
@@ -153,7 +353,7 @@
       </div>
       <div class="form-field">
         <label for="novoTipoCor">Cor:</label>
-        <input type="color" id="novoTipoCor" value="#3788d8" required />
+        <input type="color" id="novoTipoCor" class="color-picker" value="#3788d8" required />
       </div>
       <button type="submit">Salvar</button>
     </form>
@@ -184,6 +384,12 @@
   function abrirModalTipo() {
     document.getElementById('modalNovoTipo').style.display = 'block';
     document.getElementById('novoTipoNome').value = '';
+  }
+  function abrirAba(id) {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`.tab-button[onclick*="${id}"]`).classList.add('active');
+    document.getElementById(id).classList.add('active');
   }
 
   function fecharModalTipo() {
@@ -308,7 +514,7 @@
         document.getElementById("local").value = evento.extendedProps.local || "";
         document.getElementById("obs").value = evento.extendedProps.observacoes || "";
         document.getElementById("tipo").value = evento.extendedProps.tipo.id || "123";
-        
+
         // Armazena o ID do evento em edição (usado no submit ou delete)
         document.getElementById("eventForm").dataset.eventoId = evento.id;
         document.getElementById("btnExcluir").style.display = "inline-block";
@@ -346,6 +552,7 @@
           dayMaxEventRows: 1 // só aplica ao modo mês
         }
       },
+
     });
     carregarTipos();
     calendar.render();
@@ -408,7 +615,7 @@
           alert("Erro ao excluir compromisso.");
         });
     });
-    
+
   });
 
 
