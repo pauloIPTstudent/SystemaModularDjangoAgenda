@@ -8,10 +8,13 @@ from .serializers import (
 )
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from uuid import uuid4
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
 import json
+from django.utils.timezone import now
+
 
 class AgendaViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
@@ -98,3 +101,15 @@ def calendar_create_event_api(request):
             "end": compromisso.data_fim.isoformat()
         })
     return JsonResponse({"error": "Método não permitido"}, status=405)
+
+def agendar_compromisso_publico(request):
+    agendas = Agenda.objects.all()
+    tipos = AgendaTipo.objects.all()
+    if request.method == "POST":
+        agenda_id = request.POST.get("agenda_id")
+        tipo_id = request.POST.get("tipo_id")
+
+
+        
+        return redirect("agenda/agenda_sucesso")
+    return render(request, "agenda/agendar_publico.html",{"agendas":agendas,"tipos":tipos} )

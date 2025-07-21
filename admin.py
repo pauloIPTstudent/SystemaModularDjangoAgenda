@@ -8,9 +8,9 @@ from .models import AgendaCompromisso
 
 @admin.register(AgendaCompromisso)
 class AgendaCompromissoAdmin(admin.ModelAdmin):
-    list_display = ('titulo',  'agenda')
-    list_filter = ('agenda',)
-
+    list_display = ('titulo',  'agenda', 'data_inicio', 'data_fim', 'status', 'local', 'cliente')
+    list_filter = ('agenda','data_inicio', 'data_fim', 'status', 'local', 'cliente')
+    search_fields = ('titulo', 'descricao')
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
